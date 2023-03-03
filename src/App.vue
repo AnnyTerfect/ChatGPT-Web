@@ -104,7 +104,7 @@ onMounted(() => {
           <template v-slot:append>
             <v-icon
               :icon="'mdi-delete'"
-              @click="chatList.splice(i, 1)"
+              @click="chatList.splice(chatList.indexOf(chat), 1)"
             ></v-icon>
           </template>
 
