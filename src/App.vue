@@ -1,4 +1,5 @@
 <script setup>
+import './style.css'
 import Chat from './components/chat.vue'
 import { ref, onMounted, defineProps } from 'vue'
 

@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue'
+import { marked } from 'marked';
 
 const content = ref('')
 const chatList = ref([])
@@ -67,10 +68,10 @@ function sendcontent() {
                 :class="{ 'justify-end': chat.role === 'user' }"
               >
                 <p
-                  class="pa-3 rounded"
+                  class="pa-3 rounded markdown-body"
                   :class="{ user: chat.role === 'user', assistant: chat.role != 'user' }"
+                  v-html="chat.role === 'assistant' ? marked(chat.content) : chat.content"
                 >
-                  {{ chat.content }}
                 </p>
               </div>
             </div>
@@ -103,7 +104,7 @@ function sendcontent() {
         hide-details
         append-inner-icon="mdi-send"
         @click:append="sendcontent"
-        @keyup.enter="sendcontent"
+        @keypress.enter="sendcontent"
       />
     </v-card>
   </v-bottom-navigation>
@@ -115,6 +116,10 @@ function sendcontent() {
 }
 .assistant {
   background-color: #383838;
+  color: white;
+}
+.error {
+  background-color: #ff0000;
   color: white;
 }
 </style>
