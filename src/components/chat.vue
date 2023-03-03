@@ -13,6 +13,10 @@ function sendcontent() {
   sending.value = true
   chatList.value.push({role: 'user', content: content.value })
   content.value = ''
+  setTimeout(() => {
+    chatListElems.value[chatListElems.value.length - 1].scrollIntoView({ behavior: 'smooth' })
+  }, 0)
+
   fetch('https://api.openai.com/v1/chat/completions', {
     method: 'post',
     headers: {
@@ -34,10 +38,11 @@ function sendcontent() {
     chatListElems.value[chatListElems.value.length - 1].scrollIntoView({ behavior: 'smooth' })
     setTimeout(() => {
       chatListElems.value[chatListElems.value.length - 1].scrollIntoView({ behavior: 'smooth' })
-    }, 100)
+    }, 300)
   })
   .catch((err) => {
-    chatList.value.push({role: 'error', content: `Error: ${err}` })
+    console.log(err)
+    chatList.value.push({role: 'error', content: err })
     sending.value = false
   })
 }
@@ -69,7 +74,7 @@ function sendcontent() {
               >
                 <p
                   class="pa-3 rounded markdown-body"
-                  :class="{ user: chat.role === 'user', assistant: chat.role != 'user' }"
+                  :class="chat.role"
                   v-html="chat.role === 'assistant' ? marked(chat.content) : chat.content"
                 >
                 </p>
@@ -86,7 +91,28 @@ function sendcontent() {
                   class="pa-3 rounded assistant"
                 >
                   Waiting...
+                  <v-progress-circular
+                    :size="30"
+                    color="white"
+                    indeterminate
+                  ></v-progress-circular>
                 </p>
+              </div>
+            </div>
+            <!--clear-->
+            <div
+              class="mt-2"
+              v-if="chatList.filter((chat) => chat.role === 'error' && chat.content !== 'context_length_exceeded').length > 0"
+            >
+              <div
+                class="d-flex justify-center"
+              >
+                <v-btn
+                  color="error"
+                  @click="chatList = []"
+                >
+                  Clear
+                </v-btn>
               </div>
             </div>
           </v-list>
