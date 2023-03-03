@@ -1,0 +1,120 @@
+<script setup>
+import { ref } from 'vue'
+
+const content = ref('')
+const chatList = ref([])
+const chatListElems = ref(null)
+const sending = ref(false)
+
+function sendcontent() {
+  const apiKey = localStorage.getItem('apiKey')
+  if (content.value === '') return
+  sending.value = true
+  chatList.value.push({role: 'user', content: content.value })
+  content.value = ''
+  fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'post',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + apiKey,
+    },
+    body: JSON.stringify({
+      model: 'gpt-3.5-turbo',
+      messages: chatList.value.filter((chat) => chat.role == 'user' || chat.role == 'assistant')
+    })
+  })
+  .then((res) => {
+    return res.json()
+  })
+  .then((res) => {
+    if (res.error) throw `${res.error.code}: ${res.error.message}`
+    sending.value = false
+    chatList.value.push({role: 'assistant', content: res.choices[0].message.content })
+    chatListElems.value[chatListElems.value.length - 1].scrollIntoView({ behavior: 'smooth' })
+    setTimeout(() => {
+      chatListElems.value[chatListElems.value.length - 1].scrollIntoView({ behavior: 'smooth' })
+    }, 100)
+  })
+  .catch((err) => {
+    chatList.value.push({role: 'error', content: `Error: ${err}` })
+    sending.value = false
+  })
+}
+</script>
+
+<template>
+  <v-row style="max-width: 900px; margin: auto">
+    <v-col cols="12">
+      <v-card flat>
+        <div>
+          <v-list>
+            <div
+              v-if="chatList.length === 0"
+              class="text-center"
+            >
+              <p>
+                No contents yet
+              </p>
+            </div>
+            <div
+              class="mt-2"
+              v-for="(chat, index) in chatList"
+              :key="index"
+              ref="chatListElems"
+            >
+              <div
+                class="d-flex"
+                :class="{ 'justify-end': chat.role === 'user' }"
+              >
+                <p
+                  class="pa-3 rounded"
+                  :class="{ user: chat.role === 'user', assistant: chat.role != 'user' }"
+                >
+                  {{ chat.content }}
+                </p>
+              </div>
+            </div>
+            <div
+              class="mt-2"
+              v-if="sending"
+            >
+              <div
+                class="d-flex"
+              >
+                <p
+                  class="pa-3 rounded assistant"
+                >
+                  Waiting...
+                </p>
+              </div>
+            </div>
+          </v-list>
+        </div>
+      </v-card>
+    </v-col>
+  </v-row>
+
+  <v-bottom-navigation>
+    <v-card style="width: 100%; max-width: 900px;">
+      <v-text-field
+        v-model="content"
+        label="content"
+        single-line
+        hide-details
+        append-inner-icon="mdi-send"
+        @click:append="sendcontent"
+        @keyup.enter="sendcontent"
+      />
+    </v-card>
+  </v-bottom-navigation>
+</template>
+
+<style scoped>
+.user {
+  background-color: #5ee486;
+}
+.assistant {
+  background-color: #383838;
+  color: white;
+}
+</style>
