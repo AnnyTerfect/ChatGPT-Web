@@ -3,7 +3,7 @@ import Chat from './components/chat.vue'
 import { ref, onMounted, defineProps } from 'vue'
 
 // Navigation bar
-const showNav = ref(true)
+const showNav = ref(false)
 const items = ref([
   { title: 'Change API Key' },
 ])
