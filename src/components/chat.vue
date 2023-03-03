@@ -63,14 +63,14 @@ function sendcontent() {
               </p>
             </div>
             <div
-              class="mt-2"
+              :class="{ 'mt-2': index > 0 }"
               v-for="(chat, index) in chatList"
               :key="index"
               ref="chatListElems"
             >
               <div
                 class="d-flex"
-                :class="{ 'justify-end': chat.role === 'user' }"
+                :class="{ 'justify-end': chat.role === 'user', 'mr-10': chat.role === 'assistant', 'ml-10': chat.role === 'user' }"
               >
                 <p
                   class="pa-3 rounded markdown-body"
@@ -129,7 +129,7 @@ function sendcontent() {
         single-line
         hide-details
         append-inner-icon="mdi-send"
-        @click:append="sendcontent"
+        @click:append-inner="sendcontent"
         @keypress.enter="sendcontent"
       />
     </v-card>
