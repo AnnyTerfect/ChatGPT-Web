@@ -1,6 +1,6 @@
 <script setup>
 import Chat from './components/chat.vue'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, defineProps } from 'vue'
 
 // Navigation bar
 const showNav = ref(true)
@@ -14,6 +14,13 @@ const chatList = ref([
 ])
 const activeChatId = ref(1)
 const chatCounter = ref(1)
+
+const props = defineProps({
+  apiKey: {
+    type: String,
+    required: true
+  }
+})
 
 function clickChat(id) {
   activeChatId.value = id
@@ -35,6 +42,7 @@ function handleMenuClick(item, index) {
 
 onMounted(() => {
   const apiKey = localStorage.getItem('apiKey')
+  console.log(apiKey)
   if (!apiKey) {
     handleMenuClick(items[0], 0)
   }
