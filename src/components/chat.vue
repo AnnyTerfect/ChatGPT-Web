@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { marked } from 'marked';
 
 const content = ref('')
@@ -9,9 +9,7 @@ const sending = ref(false)
 
 function sendcontent(event) {
   // Shift + Enter
-  if (event.shiftKey) return
-  const apiKey = localStorage.getItem('apiKey')
-  if (content.value === '') return
+  if (event.shiftKey || content.value === '') return
 
   sending.value = true
   chatList.value.push({role: 'user', content: content.value })
@@ -20,6 +18,7 @@ function sendcontent(event) {
     chatListElems.value[chatListElems.value.length - 1].scrollIntoView({ behavior: 'smooth' })
   }, 0)
 
+  const apiKey = localStorage.getItem('apiKey')
   fetch('https://api.openai.com/v1/chat/completions', {
     method: 'post',
     headers: {
