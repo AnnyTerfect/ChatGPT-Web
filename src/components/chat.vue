@@ -12,10 +12,11 @@ function sendcontent(event) {
   if (event.shiftKey) return
   const apiKey = localStorage.getItem('apiKey')
   if (content.value === '') return
+
   sending.value = true
   chatList.value.push({role: 'user', content: content.value })
-  content.value = ''
   setTimeout(() => {
+    content.value = ''
     chatListElems.value[chatListElems.value.length - 1].scrollIntoView({ behavior: 'smooth' })
   }, 0)
 
@@ -138,7 +139,6 @@ onMounted(() => {
         append-inner-icon="mdi-send"
         @click:append-inner="sendcontent"
         @keypress.enter="sendcontent"
-        @keypress.shift.enter=""
       />
     </v-card>
   </v-bottom-navigation>
