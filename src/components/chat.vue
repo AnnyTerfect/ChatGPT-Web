@@ -49,7 +49,7 @@ function sendcontent() {
 </script>
 
 <template>
-  <v-row style="max-width: 900px; margin: auto">
+  <v-row class="elevation-5 min-h-1/1" style="max-width: 900px; margin: auto">
     <v-col cols="12">
       <v-card flat>
         <div>
