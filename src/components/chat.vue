@@ -102,7 +102,7 @@ function sendcontent() {
             <!--clear-->
             <div
               class="mt-2"
-              v-if="chatList.filter((chat) => chat.role === 'error' && chat.content !== 'context_length_exceeded').length > 0"
+              v-if="chatList.filter((chat) => chat.role === 'error' && chat.content === 'context_length_exceeded').length > 0"
             >
               <div
                 class="d-flex justify-center"
