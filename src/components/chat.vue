@@ -7,7 +7,9 @@ const chatList = ref([])
 const chatListElems = ref(null)
 const sending = ref(false)
 
-function sendcontent() {
+function sendcontent(event) {
+  // Shift + Enter
+  if (event.shiftKey) return
   const apiKey = localStorage.getItem('apiKey')
   if (content.value === '') return
   sending.value = true
@@ -128,15 +130,15 @@ onMounted(() => {
 
   <v-bottom-navigation>
     <v-card style="width: 100%; max-width: 900px;">
-      <v-text-field
+      <v-textarea
         ref="inputTextField"
         v-model="content"
         label="content"
-        single-line
-        hide-details
+        rows="1"
         append-inner-icon="mdi-send"
         @click:append-inner="sendcontent"
         @keypress.enter="sendcontent"
+        @keypress.shift.enter=""
       />
     </v-card>
   </v-bottom-navigation>
