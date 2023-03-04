@@ -1,7 +1,7 @@
 <script setup>
 import './style.css'
 import Chat from './components/chat.vue'
-import { ref, onMounted, defineProps } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 
 // Navigation bar
 const showNav = ref(false)
@@ -16,36 +16,63 @@ const chatList = ref([
 const activeChatId = ref(1)
 const chatCounter = ref(1)
 
-const props = defineProps({
-  apiKey: {
-    type: String,
-    required: true
-  }
-})
-
 function clickChat(id) {
   activeChatId.value = id
   chatList.value.forEach((chat) => chat.edit = false)
   chatList.value.filter((chat) => chat.id === id)[0].edit = true
 }
 
-function handleMenuClick(item, index) {
-  if (index === 0) {
-    const apiKey = prompt('Enter your API Key', localStorage.getItem('apiKey'))
-    if (apiKey) {
-      localStorage.setItem('apiKey', apiKey)
+// API key dialog
+const apiKey = ref(null)
+const dialog = ref(true)
+const testing = ref(false)
+const invalidKeyWarning = ref(false)
+const testSuccessText = ref(false)
+const errMsg = ref(null)
+
+function saveAPIKey() {
+  localStorage.setItem('apiKey', apiKey.value)
+  dialog.value = false
+}
+function testAPIKey() {
+  testSuccessText.value = false
+  invalidKeyWarning.value = false
+  testing.value = true
+  errMsg.value = null
+
+  fetch('https://api.openai.com/v1/engines', {
+    method: 'get',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + apiKey.value,
+    }
+  })
+  .then((res) => {
+    console.log(res)
+    if (res.status) {
+      if (res.status === 401) {
+        invalidKeyWarning.value = true
+      }
+      else if (res.status === 200) {
+        testSuccessText.value = true
+      }
     }
     else {
-      handleMenuClick(items[0], 0)
+      throw res
     }
-  }
+    testing.value = false
+  })
+  .catch((err) => {
+    testing.value = false
+    errMsg.value = err
+  })
 }
 
 onMounted(() => {
-  const apiKey = localStorage.getItem('apiKey')
+  apiKey.value = localStorage.getItem('apiKey')
   console.log(apiKey)
   if (!apiKey) {
-    handleMenuClick(items[0], 0)
+    dialog = true
   }
 })
 </script>
@@ -59,26 +86,12 @@ onMounted(() => {
       <v-app-bar-nav-icon @click="showNav = !showNav"></v-app-bar-nav-icon>
       <v-toolbar-title>Chat</v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-menu>
-        <template v-slot:activator="{ props }">
-          <v-btn
-            v-bind="props"
-            icon
-          >
-            <v-icon>mdi-dots-vertical</v-icon>
-          </v-btn>
-        </template>
-        <v-list>
-          <v-list-item
-            v-for="(item, index) in items"
-            :key="index"
-            :value="index"
-            @click="handleMenuClick(item, index)"
-          >
-            <v-list-item-title>{{ item.title }}</v-list-item-title>
-          </v-list-item>
-        </v-list>
-      </v-menu>
+      <v-btn
+        icon
+        @click="dialog = true"
+      >
+        <v-icon>mdi-key</v-icon>
+      </v-btn>
     </v-app-bar>
 
     <v-navigation-drawer
@@ -146,6 +159,81 @@ onMounted(() => {
         </transition-group>
       </div>
     </v-main>
+
+    <v-dialog
+      v-model="dialog"
+      persistent
+      max-width="500px"
+    >
+      <template v-slot:activator="{ props }">
+        <v-btn
+          color="primary"
+          v-bind="props"
+        >
+          Open Dialog
+        </v-btn>
+      </template>
+
+      <v-card>
+        <v-card-title>
+          <span class="headline">Enter your API Key</span>
+        </v-card-title>
+        <v-card-text class="text-caption">
+          You can find your API key at <a href="https://platform.openai.com/account/api-keys" target="_blank">Get API Key</a>
+        </v-card-text>
+        
+        <v-card-text>
+          <v-text-field
+            v-model="apiKey"
+            label="API Key"
+            single-line
+            hide-details
+            density="comfortable"
+            @input="testAPIKey"
+          />
+        </v-card-text>
+        <v-card-text v-if="invalidKeyWarning" class="text-caption text-red">
+          <v-icon
+            class="mr-1"
+            color="red"
+          >
+            mdi-alert-circle
+          </v-icon>
+          Invalid API Key
+        </v-card-text>
+        <v-card-text v-if="testSuccessText" class="text-caption text-green">
+          <v-icon
+            class="mr-1"
+            color="green"
+          >
+            mdi-check-circle
+          </v-icon>
+          API Key is valid
+        </v-card-text>
+        <v-card-text v-if="errMsg !== null" class="text-caption text-red">
+          <v-icon
+            class="mr-1"
+            color="red"
+          >
+            mdi-alert-circle
+          </v-icon>
+          {{ errMsg }}
+        </v-card-text>
+        <v-card-text v-if="testing" class="text-caption text-blue">
+          <v-progress-circular
+            :size="20"
+            :width="2"
+            color="white"
+            indeterminate
+          ></v-progress-circular>
+          Testing API Key
+        </v-card-text>
+        <v-card-actions class="justify-center">
+          <v-btn class="mx-3" color="" @click="testAPIKey">Test</v-btn>
+          <v-btn class="mx-3" color="primary" :disabled="!testSuccessText" @click="saveAPIKey">Save</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-app>
 </template>
 
