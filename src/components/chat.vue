@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { marked } from 'marked';
 
 const content = ref('')
@@ -46,6 +46,11 @@ function sendcontent() {
     sending.value = false
   })
 }
+
+const inputTextField = ref(null)
+onMounted(() => {
+  inputTextField.value.focus()
+})
 </script>
 
 <template>
@@ -124,6 +129,7 @@ function sendcontent() {
   <v-bottom-navigation>
     <v-card style="width: 100%; max-width: 900px;">
       <v-text-field
+        ref="inputTextField"
         v-model="content"
         label="content"
         single-line
