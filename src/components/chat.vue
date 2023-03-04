@@ -78,7 +78,7 @@ onMounted(() => {
                 :class="{ 'justify-end': chat.role === 'user', 'mr-10': chat.role === 'assistant', 'ml-10': chat.role === 'user' }"
               >
                 <p
-                  class="pa-3 rounded markdown-body"
+                  class="pa-3 rounded markdown-body overflow-scroll"
                   :class="chat.role"
                   v-html="chat.role === 'assistant' ? marked(chat.content) : chat.content"
                 >
