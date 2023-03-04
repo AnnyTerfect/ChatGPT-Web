@@ -24,7 +24,7 @@ function clickChat(id) {
 
 // API key dialog
 const apiKey = ref(null)
-const dialog = ref(true)
+const dialog = ref(false)
 const testing = ref(false)
 const invalidKeyWarning = ref(false)
 const testSuccessText = ref(false)
@@ -48,10 +48,10 @@ function testAPIKey() {
     }
   })
   .then((res) => {
-    console.log(res)
     if (res.status) {
       if (res.status === 401) {
         invalidKeyWarning.value = true
+        dialog.value = true
       }
       else if (res.status === 200) {
         testSuccessText.value = true
@@ -63,6 +63,7 @@ function testAPIKey() {
     testing.value = false
   })
   .catch((err) => {
+    dialog.value = true
     testing.value = false
     errMsg.value = err
   })
@@ -70,10 +71,7 @@ function testAPIKey() {
 
 onMounted(() => {
   apiKey.value = localStorage.getItem('apiKey')
-  console.log(apiKey)
-  if (!apiKey) {
-    dialog = true
-  }
+  testAPIKey()
 })
 </script>
 
