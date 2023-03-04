@@ -5,19 +5,19 @@ import { marked } from 'marked';
 const content = ref('')
 const chatList = ref([])
 const chatListElems = ref(null)
-const sending = ref(false)
 
 function sendcontent(event) {
   // Shift + Enter
   if (event.shiftKey || content.value === '') return
 
-  sending.value = true
   chatList.value.push({role: 'user', content: content.value })
   setTimeout(() => {
     content.value = ''
     chatListElems.value[chatListElems.value.length - 1].scrollIntoView({ behavior: 'smooth' })
   }, 0)
 
+  let responseIndex = chatList.value.length
+  chatList.value.push({role: 'sending', content: null})
   const apiKey = localStorage.getItem('apiKey')
   fetch('https://api.openai.com/v1/chat/completions', {
     method: 'post',
@@ -35,8 +35,7 @@ function sendcontent(event) {
   })
   .then((res) => {
     if (res.error) throw `${res.error.code}: ${res.error.message}`
-    sending.value = false
-    chatList.value.push({role: 'assistant', content: res.choices[0].message.content })
+    chatList.value.splice(responseIndex, 1, {role: 'assistant', content: res.choices[0].message.content })
     chatListElems.value[chatListElems.value.length - 1].scrollIntoView({ behavior: 'smooth' })
     setTimeout(() => {
       chatListElems.value[chatListElems.value.length - 1].scrollIntoView({ behavior: 'smooth' })
@@ -44,8 +43,7 @@ function sendcontent(event) {
   })
   .catch((err) => {
     console.log(err)
-    chatList.value.push({role: 'error', content: err })
-    sending.value = false
+    chatList.value.splice(responseIndex, 1, {role: 'error', content: err })
   })
 }
 
@@ -78,6 +76,7 @@ onMounted(() => {
               <div
                 class="d-flex"
                 :class="{ 'justify-end': chat.role === 'user', 'mr-10': chat.role === 'assistant', 'ml-10': chat.role === 'user' }"
+                v-if="chat.role !== 'sending'"
               >
                 <p
                   class="pa-3 rounded markdown-body overflow-scroll"
@@ -86,13 +85,10 @@ onMounted(() => {
                 >
                 </p>
               </div>
-            </div>
-            <div
-              class="mt-2"
-              v-if="sending"
-            >
+              
               <div
                 class="d-flex"
+                v-if="chat.role === 'sending'"
               >
                 <p
                   class="pa-3 rounded assistant"
