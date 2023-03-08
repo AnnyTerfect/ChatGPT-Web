@@ -21,23 +21,29 @@ function sendcontent(event) {
       if (result.done) {
         return;
       }
-      const values = new TextDecoder("utf-8").decode(result.value).trim();
-      /*
-      if (res.error) throw `${res.error.code}: ${res.error.message}`
-      chatList.value.splice(responseIndex, 1, {role: 'assistant', content: res.choices[0].message.content })
-      chatListElems.value[chatListElems.value.length - 1].scrollIntoView({ behavior: 'smooth' })
-      setTimeout(() => {
-        chatListElems.value[chatListElems.value.length - 1].scrollIntoView({ behavior: 'smooth' })
-      }, 300)*/
-      for (let value of values.split('\n')) {
-        value = value.replace('data: ', '').trim()
+      const values = new TextDecoder("utf-8").decode(result.value)
+      
+      let error = false
+      try {
+        error = typeof(JSON.parse(values)) === 'object'
+        console.log(typeof(JSON.parse(values)))
+      } catch {}
 
-        if (value && value !== '[DONE]' && value !== '{' && value !== '}') {
-          let res = JSON.parse(value)
-          if (res.error) throw `${res.error.code}: ${res.error.message}`
+      if (error) {
+        let error = JSON.parse(values).error
+        if (error.message) {
+          throw `${error.code}: ${error.message}`
+        }
+      }
 
+      values.split('\n')
+        .filter((value) => value && value.indexOf('[DONE]') === -1)
+        .map((value) => value.replace('data: ', '').trim())
+        .map((value) => JSON.parse(value))
+        .filter((res) => res.choices && res.choices.length > 0)
+        .forEach((res) => {
           let deltaContent = res.choices[0].delta.content
-          if (deltaContent && deltaContent.trim()) {
+          if (deltaContent) {
             let oldContent = chatList.value[responseIndex].content
             chatList.value.splice(responseIndex, 1, {role: 'assistant', content: oldContent + deltaContent })
             chatListElems.value[chatListElems.value.length - 1].scrollIntoView({ behavior: 'smooth' })
@@ -45,9 +51,7 @@ function sendcontent(event) {
               chatListElems.value[chatListElems.value.length - 1].scrollIntoView({ behavior: 'smooth' })
             }, 300)
           }
-        }
-      }
-      // console.log(JSON.parse(value.replace('data: ', '').trim()))
+        })
       return fetchStream(reader);
     });
   }
