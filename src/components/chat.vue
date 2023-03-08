@@ -16,8 +16,44 @@ function sendcontent(event) {
     chatListElems.value[chatListElems.value.length - 1].scrollIntoView({ behavior: 'smooth' })
   }, 0)
 
+  const fetchStream = (reader) => {
+    return reader.read().then((result) => {
+      if (result.done) {
+        return;
+      }
+      const values = new TextDecoder("utf-8").decode(result.value).trim();
+      /*
+      if (res.error) throw `${res.error.code}: ${res.error.message}`
+      chatList.value.splice(responseIndex, 1, {role: 'assistant', content: res.choices[0].message.content })
+      chatListElems.value[chatListElems.value.length - 1].scrollIntoView({ behavior: 'smooth' })
+      setTimeout(() => {
+        chatListElems.value[chatListElems.value.length - 1].scrollIntoView({ behavior: 'smooth' })
+      }, 300)*/
+      for (let value of values.split('\n')) {
+        value = value.replace('data: ', '').trim()
+
+        if (value && value !== '[DONE]' && value !== '{' && value !== '}') {
+          let res = JSON.parse(value)
+          if (res.error) throw `${res.error.code}: ${res.error.message}`
+
+          let deltaContent = res.choices[0].delta.content
+          if (deltaContent && deltaContent.trim()) {
+            let oldContent = chatList.value[responseIndex].content
+            chatList.value.splice(responseIndex, 1, {role: 'assistant', content: oldContent + deltaContent })
+            chatListElems.value[chatListElems.value.length - 1].scrollIntoView({ behavior: 'smooth' })
+            setTimeout(() => {
+              chatListElems.value[chatListElems.value.length - 1].scrollIntoView({ behavior: 'smooth' })
+            }, 300)
+          }
+        }
+      }
+      // console.log(JSON.parse(value.replace('data: ', '').trim()))
+      return fetchStream(reader);
+    });
+  }
+
   let responseIndex = chatList.value.length
-  chatList.value.push({role: 'sending', content: null})
+  chatList.value.push({role: 'sending', content: ''})
   const apiKey = localStorage.getItem('apiKey')
   fetch('https://api.openai.com/v1/chat/completions', {
     method: 'post',
@@ -27,24 +63,16 @@ function sendcontent(event) {
     },
     body: JSON.stringify({
       model: 'gpt-3.5-turbo',
-      messages: chatList.value.filter((chat) => chat.role == 'user' || chat.role == 'assistant')
+      messages: chatList.value.filter((chat) => chat.role == 'user' || chat.role == 'assistant'),
+      stream: true,
     })
   })
-  .then((res) => {
-    return res.json()
-  })
-  .then((res) => {
-    if (res.error) throw `${res.error.code}: ${res.error.message}`
-    chatList.value.splice(responseIndex, 1, {role: 'assistant', content: res.choices[0].message.content })
-    chatListElems.value[chatListElems.value.length - 1].scrollIntoView({ behavior: 'smooth' })
-    setTimeout(() => {
-      chatListElems.value[chatListElems.value.length - 1].scrollIntoView({ behavior: 'smooth' })
-    }, 300)
-  })
+  .then(async (res) => res.body.getReader())
+  .then(fetchStream)
   .catch((err) => {
     console.log(err)
     chatList.value.splice(responseIndex, 1, {role: 'error', content: err })
-  })
+  }) 
 }
 
 const inputTextField = ref(null)
